@@ -1,0 +1,65 @@
+# ─── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.whl
+
+# ─── Virtual Environments ─────────────────────────────────
+venv/
+env/
+.env
+.venv/
+ENV/
+
+# ─── Jupyter Notebooks ────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── IDE & Editor ─────────────────────────────────────────
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ─── OS Files ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Data Files (large / sensitive) ──────────────────────
+# Uncomment below if you don't want CSVs tracked
+# *.csv
+# *.xlsx
+# *.json
+
+# ─── Model Artifacts ──────────────────────────────────────
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+*.model
+
+# ─── Logs & Outputs ───────────────────────────────────────
+logs/
+*.log
+*.out
+*.err
+
+# ─── Streamlit Cache ──────────────────────────────────────
+.streamlit/
+__pycache__/
+
+# ─── Environment Variables ────────────────────────────────
+.env
+.env.local
+secrets.toml
