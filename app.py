@@ -14,7 +14,6 @@ warnings.filterwarnings('ignore')
 # Page config
 st.set_page_config(
     page_title="AirCast Delhi - SIH 2025",
-    page_icon="🌍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -56,7 +55,7 @@ def load_data():
     sites = {}
     for i in range(1, 8):
         try:
-            df = pd.read_csv(f'site_{i}_train_data.csv')
+            df = pd.read_csv(f'data/raw/site_{i}_train_data.csv')
             df['site_id'] = i
             sites[f'site_{i}'] = df
         except:
@@ -70,7 +69,7 @@ def load_data():
 
 @st.cache_data
 def create_features(df):
-    """Feature engineering pipeline - UPDATED to match training code"""
+    """Feature engineering pipeline"""
     df = df.copy()
 
     # Wind features
@@ -94,7 +93,7 @@ def create_features(df):
     # Sort for lag features
     df = df.sort_values(['site_id', 'date', 'hour'])
 
-    # Lag features (24h and 48h as per training code)
+    # Lag features (24h and 48h)
     for lag in [24, 48]:
         df[f'O3_lag_{lag}h'] = df.groupby('site_id')['O3_target'].shift(lag)
         df[f'NO2_lag_{lag}h'] = df.groupby('site_id')['NO2_target'].shift(lag)
@@ -112,7 +111,7 @@ def calculate_ria(y_true, y_pred):
 
 @st.cache_resource
 def train_models(X_train, y_train_o3, y_train_no2, X_val, y_val_o3, y_val_no2):
-    """Train XGBoost and LightGBM models - UPDATED to match training code"""
+    """Train XGBoost and LightGBM models"""
 
     # O3 XGBoost model
     o3_xgb = XGBRegressor(
@@ -164,7 +163,7 @@ def train_models(X_train, y_train_o3, y_train_no2, X_val, y_val_o3, y_val_no2):
 
 
 def make_ensemble_predictions(o3_xgb, o3_lgbm, no2_xgb, no2_lgbm, X):
-    """Make ensemble predictions - UPDATED with 60-40 weighting"""
+    """Make ensemble predictions with 60-40 weighting"""
     pred_o3_xgb = o3_xgb.predict(X)
     pred_o3_lgbm = o3_lgbm.predict(X)
     pred_o3_ensemble = 0.6 * pred_o3_xgb + 0.4 * pred_o3_lgbm
@@ -180,24 +179,24 @@ def make_ensemble_predictions(o3_xgb, o3_lgbm, no2_xgb, no2_lgbm, X):
 data = load_data()
 
 if data is None:
-    st.error("Unable to load data. Please ensure CSV files are in the correct directory.")
+    st.error("Unable to load data. Please ensure CSV files exist at data/raw/site_1_train_data.csv through site_7_train_data.csv.")
     st.stop()
 
 # Sidebar
 with st.sidebar:
-    st.markdown("###  SIH 2025")
+    st.markdown("### SIH 2025")
     st.markdown("**Team:** VisionX")
     st.markdown("**PS ID:** 25178")
     st.markdown("**Theme:** Space Technology")
     st.divider()
 
     page = st.radio("Navigate",
-                    [" Home", " Live Predictions", " Data Analysis",
-                     " Model Performance", " About"],
+                    ["Home", "Live Predictions", "Data Analysis",
+                     "Model Performance", "About"],
                     label_visibility="collapsed")
 
 # Main content
-if page == " Home":
+if page == "Home":
     st.markdown('<div class="main-header">AirCast Delhi</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Intelligent Air Quality Forecasting System</div>', unsafe_allow_html=True)
 
@@ -214,39 +213,39 @@ if page == " Home":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("###  Problem Statement")
+        st.markdown("### Problem Statement")
         st.info("""
         **Objective:** Develop AI/ML-based models for short-term forecasting (24 hours) of 
-        ground-level O₃ and NO₂ using satellite observations and reanalysis data.
+        ground-level O3 and NO2 using satellite observations and reanalysis data.
 
         **Challenge:** Integrate sparse satellite data (3% coverage) with meteorological 
         forecasts to predict hourly pollution levels.
         """)
 
-        st.markdown("###  Our Approach")
+        st.markdown("### Our Approach")
         st.success("""
-        - **Ensemble Learning** with XGBoost + LightGBM (60-40 weighting)
-        - **Advanced feature engineering** with temporal and meteorological features
-        - **Lag features** (24h, 48h) for temporal dependencies
-        - **Smart satellite integration** via forward-fill strategy
-        - **Multi-site training** from 7 Delhi locations
+        - Ensemble Learning with XGBoost + LightGBM (60-40 weighting)
+        - Advanced feature engineering with temporal and meteorological features
+        - Lag features (24h, 48h) for temporal dependencies
+        - Smart satellite integration via forward-fill strategy
+        - Multi-site training from 7 Delhi locations
         """)
 
     with col2:
-        st.markdown("###  Key Features")
+        st.markdown("### Key Features")
         features = [
-            "24-hour hourly O₃ and NO₂ predictions",
+            "24-hour hourly O3 and NO2 predictions",
             "Ensemble model (XGBoost + LightGBM)",
             "Real-time air quality visualization",
             "Site-specific and city-wide forecasts",
             "Historical pattern analysis",
-            "Model performance metrics (RMSE, R², RIA)",
+            "Model performance metrics (RMSE, R2, RIA)",
             "Scalable to other Indian cities"
         ]
         for feature in features:
-            st.markdown(f"✓ {feature}")
+            st.markdown(f"- {feature}")
 
-        st.markdown("###  Expected Impact")
+        st.markdown("### Expected Impact")
         st.warning("""
         - Public health alerts for vulnerable groups
         - Data-driven policy decisions
@@ -254,8 +253,8 @@ if page == " Home":
         - Foundation for multi-city expansion
         """)
 
-elif page == " Live Predictions":
-    st.markdown("##  Live 24-Hour Air Quality Forecast")
+elif page == "Live Predictions":
+    st.markdown("## Live 24-Hour Air Quality Forecast")
 
     # Prepare data
     with st.spinner("Preparing models and data..."):
@@ -306,36 +305,36 @@ elif page == " Live Predictions":
         # Display metrics
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Avg O₃ Forecast", f"{forecast_df['O3_Predicted'].mean():.1f} μg/m³")
+            st.metric("Avg O3 Forecast", f"{forecast_df['O3_Predicted'].mean():.1f} ug/m3")
         with col2:
-            st.metric("Max O₃ Forecast", f"{forecast_df['O3_Predicted'].max():.1f} μg/m³")
+            st.metric("Max O3 Forecast", f"{forecast_df['O3_Predicted'].max():.1f} ug/m3")
         with col3:
-            st.metric("Avg NO₂ Forecast", f"{forecast_df['NO2_Predicted'].mean():.1f} μg/m³")
+            st.metric("Avg NO2 Forecast", f"{forecast_df['NO2_Predicted'].mean():.1f} ug/m3")
         with col4:
-            st.metric("Max NO₂ Forecast", f"{forecast_df['NO2_Predicted'].max():.1f} μg/m³")
+            st.metric("Max NO2 Forecast", f"{forecast_df['NO2_Predicted'].max():.1f} ug/m3")
 
         # Interactive plot
-        fig = make_subplots(rows=2, cols=1, subplot_titles=("O₃ Forecast", "NO₂ Forecast"))
+        fig = make_subplots(rows=2, cols=1, subplot_titles=("O3 Forecast", "NO2 Forecast"))
 
         # O3 plot
         fig.add_trace(go.Scatter(x=forecast_df['Hour'], y=forecast_df['O3_Actual'],
-                                 mode='lines+markers', name='O₃ Actual',
+                                 mode='lines+markers', name='O3 Actual',
                                  line=dict(color='blue', width=2)), row=1, col=1)
         fig.add_trace(go.Scatter(x=forecast_df['Hour'], y=forecast_df['O3_Predicted'],
-                                 mode='lines+markers', name='O₃ Predicted (Ensemble)',
+                                 mode='lines+markers', name='O3 Predicted (Ensemble)',
                                  line=dict(color='lightblue', width=2, dash='dash')), row=1, col=1)
 
         # NO2 plot
         fig.add_trace(go.Scatter(x=forecast_df['Hour'], y=forecast_df['NO2_Actual'],
-                                 mode='lines+markers', name='NO₂ Actual',
+                                 mode='lines+markers', name='NO2 Actual',
                                  line=dict(color='red', width=2)), row=2, col=1)
         fig.add_trace(go.Scatter(x=forecast_df['Hour'], y=forecast_df['NO2_Predicted'],
-                                 mode='lines+markers', name='NO₂ Predicted (Ensemble)',
+                                 mode='lines+markers', name='NO2 Predicted (Ensemble)',
                                  line=dict(color='lightcoral', width=2, dash='dash')), row=2, col=1)
 
         fig.update_xaxes(title_text="Hour of Day", row=2, col=1)
-        fig.update_yaxes(title_text="O₃ (μg/m³)", row=1, col=1)
-        fig.update_yaxes(title_text="NO₂ (μg/m³)", row=2, col=1)
+        fig.update_yaxes(title_text="O3 (ug/m3)", row=1, col=1)
+        fig.update_yaxes(title_text="NO2 (ug/m3)", row=2, col=1)
         fig.update_layout(height=600, showlegend=True)
 
         st.plotly_chart(fig, use_container_width=True)
@@ -346,8 +345,8 @@ elif page == " Live Predictions":
     else:
         st.warning("No data available for selected site")
 
-elif page == " Data Analysis":
-    st.markdown("##  Historical Data Analysis")
+elif page == "Data Analysis":
+    st.markdown("## Historical Data Analysis")
 
     tab1, tab2, tab3 = st.tabs(["Hourly Patterns", "Seasonal Trends", "Site Comparison"])
 
@@ -356,7 +355,7 @@ elif page == " Data Analysis":
 
         hourly_data = data.groupby('hour')[['O3_target', 'NO2_target']].mean().reset_index()
 
-        fig = make_subplots(rows=1, cols=2, subplot_titles=("O₃ Pattern", "NO₂ Pattern"))
+        fig = make_subplots(rows=1, cols=2, subplot_titles=("O3 Pattern", "NO2 Pattern"))
 
         fig.add_trace(go.Scatter(x=hourly_data['hour'], y=hourly_data['O3_target'],
                                  mode='lines+markers', fill='tozeroy',
@@ -367,14 +366,14 @@ elif page == " Data Analysis":
                                  line=dict(color='red', width=3)), row=1, col=2)
 
         fig.update_xaxes(title_text="Hour of Day")
-        fig.update_yaxes(title_text="O₃ (μg/m³)", row=1, col=1)
-        fig.update_yaxes(title_text="NO₂ (μg/m³)", row=1, col=2)
+        fig.update_yaxes(title_text="O3 (ug/m3)", row=1, col=1)
+        fig.update_yaxes(title_text="NO2 (ug/m3)", row=1, col=2)
         fig.update_layout(height=400, showlegend=False)
 
         st.plotly_chart(fig, use_container_width=True)
 
         st.info(
-            "**Key Insights:** O₃ peaks around afternoon (12-15h) due to photochemical reactions. NO₂ shows traffic-related peaks during morning rush (6-8h).")
+            "**Key Insights:** O3 peaks around afternoon (12-15h) due to photochemical reactions. NO2 shows traffic-related peaks during morning rush (6-8h).")
 
     with tab2:
         st.markdown("### Seasonal Trends")
@@ -383,18 +382,18 @@ elif page == " Data Analysis":
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=monthly_data['month'], y=monthly_data['O3_target'],
-                                 mode='lines+markers', name='O₃',
+                                 mode='lines+markers', name='O3',
                                  line=dict(color='blue', width=3)))
         fig.add_trace(go.Scatter(x=monthly_data['month'], y=monthly_data['NO2_target'],
-                                 mode='lines+markers', name='NO₂',
+                                 mode='lines+markers', name='NO2',
                                  line=dict(color='red', width=3)))
 
-        fig.update_layout(xaxis_title="Month", yaxis_title="Concentration (μg/m³)",
+        fig.update_layout(xaxis_title="Month", yaxis_title="Concentration (ug/m3)",
                           height=400)
         st.plotly_chart(fig, use_container_width=True)
 
         st.info(
-            "**Key Insights:** O₃ peaks in summer months, NO₂ peaks in winter due to crop burning and temperature inversion.")
+            "**Key Insights:** O3 peaks in summer months, NO2 peaks in winter due to crop burning and temperature inversion.")
 
     with tab3:
         st.markdown("### Site-wise Comparison")
@@ -403,19 +402,19 @@ elif page == " Data Analysis":
 
         fig = go.Figure()
         fig.add_trace(go.Bar(x=site_data['site_id'], y=site_data['O3_target'],
-                             name='O₃', marker_color='blue'))
+                             name='O3', marker_color='blue'))
         fig.add_trace(go.Bar(x=site_data['site_id'], y=site_data['NO2_target'],
-                             name='NO₂', marker_color='red'))
+                             name='NO2', marker_color='red'))
 
-        fig.update_layout(xaxis_title="Site ID", yaxis_title="Average Concentration (μg/m³)",
+        fig.update_layout(xaxis_title="Site ID", yaxis_title="Average Concentration (ug/m3)",
                           height=400, barmode='group')
         st.plotly_chart(fig, use_container_width=True)
 
         st.info(
             "**Key Insights:** Sites show 2-3x variation in pollution levels, indicating spatial heterogeneity across Delhi.")
 
-elif page == " Model Performance":
-    st.markdown("##  Model Performance Metrics")
+elif page == "Model Performance":
+    st.markdown("## Model Performance Metrics")
     with st.spinner("Training models and calculating metrics..."):
         processed_data = create_features(data)
 
@@ -456,15 +455,15 @@ elif page == " Model Performance":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("### O₃ Model Performance")
-        st.metric("RMSE", f"{o3_rmse:.2f} μg/m³", delta="Lower is better", delta_color="inverse")
-        st.metric("R² Score", f"{o3_r2:.3f}", delta="Target: > 0.75")
+        st.markdown("### O3 Model Performance")
+        st.metric("RMSE", f"{o3_rmse:.2f} ug/m3", delta="Lower is better", delta_color="inverse")
+        st.metric("R2 Score", f"{o3_r2:.3f}", delta="Target: > 0.75")
         st.metric("RIA", f"{o3_ria:.3f}", delta="Target: > 0.80")
 
     with col2:
-        st.markdown("### NO₂ Model Performance")
-        st.metric("RMSE", f"{no2_rmse:.2f} μg/m³", delta="Lower is better", delta_color="inverse")
-        st.metric("R² Score", f"{no2_r2:.3f}", delta="Target: > 0.75")
+        st.markdown("### NO2 Model Performance")
+        st.metric("RMSE", f"{no2_rmse:.2f} ug/m3", delta="Lower is better", delta_color="inverse")
+        st.metric("R2 Score", f"{no2_r2:.3f}", delta="Target: > 0.75")
         st.metric("RIA", f"{no2_ria:.3f}", delta="Target: > 0.80")
 
     st.divider()
@@ -473,16 +472,16 @@ elif page == " Model Performance":
     col1, col2 = st.columns(2)
 
     with col1:
-        fig = px.scatter(x=y_val_o3, y=pred_o3, labels={'x': 'Actual O₃', 'y': 'Predicted O₃'},
-                         title="O₃: Predicted vs Actual")
+        fig = px.scatter(x=y_val_o3, y=pred_o3, labels={'x': 'Actual O3', 'y': 'Predicted O3'},
+                         title="O3: Predicted vs Actual")
         fig.add_trace(go.Scatter(x=[0, 200], y=[0, 200], mode='lines',
                                  name='Perfect Prediction', line=dict(color='red', dash='dash')))
         fig.update_layout(height=400)
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        fig = px.scatter(x=y_val_no2, y=pred_no2, labels={'x': 'Actual NO₂', 'y': 'Predicted NO₂'},
-                         title="NO₂: Predicted vs Actual")
+        fig = px.scatter(x=y_val_no2, y=pred_no2, labels={'x': 'Actual NO2', 'y': 'Predicted NO2'},
+                         title="NO2: Predicted vs Actual")
         fig.add_trace(go.Scatter(x=[0, 300], y=[0, 300], mode='lines',
                                  name='Perfect Prediction', line=dict(color='red', dash='dash')))
         fig.update_layout(height=400)
@@ -501,7 +500,7 @@ elif page == " Model Performance":
         }).sort_values('importance', ascending=False).head(15)
 
         fig = px.bar(o3_importance, x='importance', y='feature', orientation='h',
-                     title='Top 15 Features for O₃ Prediction',
+                     title='Top 15 Features for O3 Prediction',
                      labels={'importance': 'Importance', 'feature': 'Feature'})
         fig.update_layout(height=500, yaxis={'categoryorder': 'total ascending'})
         st.plotly_chart(fig, use_container_width=True)
@@ -513,7 +512,7 @@ elif page == " Model Performance":
         }).sort_values('importance', ascending=False).head(15)
 
         fig = px.bar(no2_importance, x='importance', y='feature', orientation='h',
-                     title='Top 15 Features for NO₂ Prediction',
+                     title='Top 15 Features for NO2 Prediction',
                      labels={'importance': 'Importance', 'feature': 'Feature'})
         fig.update_layout(height=500, yaxis={'categoryorder': 'total ascending'})
         st.plotly_chart(fig, use_container_width=True)
@@ -522,38 +521,35 @@ elif page == " Model Performance":
     st.divider()
     st.markdown("### Time Series Validation (Sample)")
 
-    # Take first 168 hours (1 week) for visualization
     sample_size = min(168, len(y_val_o3))
     sample_idx = slice(0, sample_size)
 
     fig = make_subplots(rows=2, cols=1,
-                        subplot_titles=("O₃ Time Series Comparison", "NO₂ Time Series Comparison"))
+                        subplot_titles=("O3 Time Series Comparison", "NO2 Time Series Comparison"))
 
-    # O3 time series
     fig.add_trace(go.Scatter(x=list(range(sample_size)), y=y_val_o3.values[sample_idx],
-                             mode='lines', name='O₃ Actual',
+                             mode='lines', name='O3 Actual',
                              line=dict(color='blue', width=2)), row=1, col=1)
     fig.add_trace(go.Scatter(x=list(range(sample_size)), y=pred_o3[sample_idx],
-                             mode='lines', name='O₃ Predicted',
+                             mode='lines', name='O3 Predicted',
                              line=dict(color='lightblue', width=2, dash='dash')), row=1, col=1)
 
-    # NO2 time series
     fig.add_trace(go.Scatter(x=list(range(sample_size)), y=y_val_no2.values[sample_idx],
-                             mode='lines', name='NO₂ Actual',
+                             mode='lines', name='NO2 Actual',
                              line=dict(color='red', width=2)), row=2, col=1)
     fig.add_trace(go.Scatter(x=list(range(sample_size)), y=pred_no2[sample_idx],
-                             mode='lines', name='NO₂ Predicted',
+                             mode='lines', name='NO2 Predicted',
                              line=dict(color='lightcoral', width=2, dash='dash')), row=2, col=1)
 
     fig.update_xaxes(title_text="Sample Index", row=2, col=1)
-    fig.update_yaxes(title_text="O₃ (μg/m³)", row=1, col=1)
-    fig.update_yaxes(title_text="NO₂ (μg/m³)", row=2, col=1)
+    fig.update_yaxes(title_text="O3 (ug/m3)", row=1, col=1)
+    fig.update_yaxes(title_text="NO2 (ug/m3)", row=2, col=1)
     fig.update_layout(height=600, showlegend=True)
 
     st.plotly_chart(fig, use_container_width=True)
 
 else:  # About page
-    st.markdown("##  About AirCast Delhi")
+    st.markdown("## About AirCast Delhi")
 
     st.markdown("""
     ### Project Overview
@@ -575,8 +571,8 @@ else:  # About page
     - Meteorological interactions
 
     **3. Model Architecture**
-    - **Ensemble approach:** XGBoost (60%) + LightGBM (40%)
-    - Separate optimization for O₃ and NO₂
+    - Ensemble approach: XGBoost (60%) + LightGBM (40%)
+    - Separate optimization for O3 and NO2
     - Early stopping to prevent overfitting
     - Multi-site pooled training (7 locations)
     - Tree-based method: histogram optimization
@@ -612,7 +608,7 @@ else:  # About page
 
     ### Performance Metrics
     - **RMSE:** Root Mean Square Error (lower is better)
-    - **R² Score:** Coefficient of Determination (target > 0.75)
+    - **R2 Score:** Coefficient of Determination (target > 0.75)
     - **RIA:** Refined Index of Agreement (target > 0.80)
 
     ### Future Enhancements
@@ -633,4 +629,3 @@ st.markdown("""
         <p>Ensemble Model: XGBoost (60%) + LightGBM (40%)</p>
     </div>
 """, unsafe_allow_html=True)
-
